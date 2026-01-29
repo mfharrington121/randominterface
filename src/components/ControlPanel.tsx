@@ -9,23 +9,31 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Card } from "@/components/ui/card";
+import type { ModelOption } from "@/types/api";
 
 interface ControlPanelProps {
   count: number;
   onCountChange: (count: number) => void;
+  model: ModelOption;
+  onModelChange: (model: ModelOption) => void;
   onGenerate: () => void;
+  onClear: () => void;
   disabled: boolean;
 }
 
 export function ControlPanel({
   count,
   onCountChange,
+  model,
+  onModelChange,
   onGenerate,
+  onClear,
   disabled,
 }: ControlPanelProps) {
   return (
-    <Card className="p-6 bg-white/80 backdrop-blur-sm border-2 border-gray-200 shadow-lg">
-      <div className="flex flex-col sm:flex-row gap-4 items-center justify-center">
+    <Card className="p-6 bg-white border-2 border-gray-300 shadow-lg">
+      <div className="flex flex-col gap-4">
+        {/* Count Selector */}
         <div className="flex flex-col gap-2">
           <label htmlFor="count-select" className="text-sm font-medium text-gray-700">
             Numbers to Generate
@@ -37,7 +45,7 @@ export function ControlPanel({
           >
             <SelectTrigger
               id="count-select"
-              className="w-[180px] bg-white border-2 border-gray-300 hover:border-blue-400 transition-colors"
+              className="w-full bg-white border-3 border-blue-500 hover:border-blue-600 transition-colors font-semibold text-gray-900 shadow-sm disabled:opacity-70 disabled:cursor-not-allowed"
             >
               <SelectValue placeholder="Select count" />
             </SelectTrigger>
@@ -48,6 +56,45 @@ export function ControlPanel({
             </SelectContent>
           </Select>
         </div>
+
+        {/* Model Selector */}
+        <div className="flex flex-col gap-2">
+          <label htmlFor="model-select" className="text-sm font-medium text-gray-700">
+            AI Model
+          </label>
+          <Select
+            value={model}
+            onValueChange={(value) => onModelChange(value as ModelOption)}
+            disabled={disabled}
+          >
+            <SelectTrigger
+              id="model-select"
+              className="w-full bg-white border-2 border-purple-500 hover:border-purple-600 transition-colors font-semibold text-gray-900 shadow-sm disabled:opacity-70 disabled:cursor-not-allowed"
+            >
+              <SelectValue placeholder="Select model" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="anthropic/claude-sonnet-4.5">
+                Claude Sonnet 4.5
+              </SelectItem>
+              <SelectItem value="google/gemini-3-flash-preview">
+                Gemini 3 Flash Preview
+              </SelectItem>
+              <SelectItem value="openai/gpt-4o-mini">
+                GPT-4o Mini
+              </SelectItem>
+              <SelectItem value="sao10k/l3-lunaris-8b">
+                Lunaris 8B
+              </SelectItem>
+              <SelectItem value="mistralai/ministral-3b">
+                Ministral 3B
+              </SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        {/* Buttons */}
+        <div className="flex flex-col sm:flex-row gap-3 mt-2">
 
         <Button
           onClick={onGenerate}
@@ -85,6 +132,19 @@ export function ControlPanel({
             </span>
           )}
         </Button>
+
+        <Button
+          onClick={onClear}
+          disabled={disabled}
+          variant="outline"
+          size="lg"
+          className="border-2 border-gray-300 hover:border-red-400 hover:bg-red-50 text-gray-700 hover:text-red-600 font-semibold px-6 py-6 text-lg shadow-sm transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          <span className="flex items-center gap-2">
+            🗑️ Clear History
+          </span>
+        </Button>
+      </div>
       </div>
     </Card>
   );

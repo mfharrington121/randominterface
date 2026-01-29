@@ -2,9 +2,11 @@
  * OpenRouter API Client for AI Random Number Generation
  */
 
+import type { ModelOption } from "@/types/api";
+
 const OPENROUTER_API_URL = "https://openrouter.ai/api/v1/chat/completions";
-const MODEL = "google/gemini-2.5-flash-lite";
-const PROMPT = "Generate a random number 1-100. Only output the number, nothing else. do not use human bias. actually generate a random number";
+const DEFAULT_MODEL: ModelOption = "anthropic/claude-sonnet-4.5";
+const PROMPT = "Generate a random number 1-100. Only output the number, nothing else. Do not use human bias. Actually generate a random number.";
 
 interface OpenRouterResponse {
   choices: Array<{
@@ -17,9 +19,13 @@ interface OpenRouterResponse {
 /**
  * Generate a single random number (1-100) using OpenRouter API
  * @param retryCount Current retry attempt (for internal use)
+ * @param model The OpenRouter model to use
  * @returns A random number between 1 and 100
  */
-export async function generateRandomNumber(retryCount = 0): Promise<number> {
+export async function generateRandomNumber(
+  retryCount = 0,
+  model: ModelOption = DEFAULT_MODEL
+): Promise<number> {
   const maxRetries = 2;
   const apiKey = process.env.OPENROUTER_API_KEY;
 
@@ -37,7 +43,7 @@ export async function generateRandomNumber(retryCount = 0): Promise<number> {
         "X-Title": "AI Random Number Generator",
       },
       body: JSON.stringify({
-        model: MODEL,
+        model: model,
         messages: [
           {
             role: "user",
@@ -84,7 +90,7 @@ export async function generateRandomNumber(retryCount = 0): Promise<number> {
     if (retryCount < maxRetries) {
       console.log(`Retrying... (${retryCount + 1}/${maxRetries})`);
       await new Promise(resolve => setTimeout(resolve, 1000)); // Wait 1s before retry
-      return generateRandomNumber(retryCount + 1);
+      return generateRandomNumber(retryCount + 1, model);
     }
 
     // After max retries, throw error
@@ -95,3 +101,4 @@ export async function generateRandomNumber(retryCount = 0): Promise<number> {
     );
   }
 }
+

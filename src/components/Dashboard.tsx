@@ -3,14 +3,14 @@
 import { useState, useRef } from "react";
 import { ControlPanel } from "./ControlPanel";
 import { RealtimeHistogram } from "./RealtimeHistogram";
-import { StatusIndicator } from "./StatusIndicator";
 import { StatsPanel } from "./StatsPanel";
 import { initializeHistogram, incrementBin } from "@/lib/histogram";
-import type { SSEMessage } from "@/types/api";
+import type { SSEMessage, ModelOption } from "@/types/api";
 
 export function Dashboard() {
   // State management
-  const [count, setCount] = useState<number>(5);
+  const [count, setCount] = useState<number>(1);
+  const [model, setModel] = useState<ModelOption>("anthropic/claude-sonnet-4.5");
   const [isGenerating, setIsGenerating] = useState(false);
   const [progress, setProgress] = useState({ current: 0, total: 0 });
   const [histogramData, setHistogramData] = useState(initializeHistogram());
@@ -20,13 +20,21 @@ export function Dashboard() {
   // Store abort controller ref to cancel ongoing requests
   const abortControllerRef = useRef<AbortController | null>(null);
 
+  const handleClear = () => {
+    setHistogramData(initializeHistogram());
+    setRawNumbers([]);
+    setProgress({ current: 0, total: 0 });
+    setError(null);
+  };
+
   const handleGenerate = async () => {
     // Reset state
     setIsGenerating(true);
     setError(null);
     setProgress({ current: 0, total: count });
-    setHistogramData(initializeHistogram());
-    setRawNumbers([]);
+    // DON'T reset histogram or raw numbers - let them accumulate!
+    // setHistogramData(initializeHistogram());
+    // setRawNumbers([]);
 
     try {
       // Create abort controller for cancellation
@@ -38,7 +46,7 @@ export function Dashboard() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ count }),
+        body: JSON.stringify({ count, model }),
         signal: abortControllerRef.current.signal,
       });
 
@@ -124,7 +132,10 @@ export function Dashboard() {
       <ControlPanel
         count={count}
         onCountChange={setCount}
+        model={model}
+        onModelChange={setModel}
         onGenerate={handleGenerate}
+        onClear={handleClear}
         disabled={isGenerating}
       />
 
@@ -148,11 +159,6 @@ export function Dashboard() {
             </div>
           </div>
         </div>
-      )}
-
-      {/* Status Indicator */}
-      {(progress.total > 0 || isGenerating) && (
-        <StatusIndicator progress={progress} isGenerating={isGenerating} />
       )}
 
       {/* Histogram */}

@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
 import { generateRandomNumber } from "@/lib/openrouter";
-import type { GenerateRequest, SSEMessage } from "@/types/api";
+import type { GenerateRequest, SSEMessage, ModelOption } from "@/types/api";
 
 /**
  * POST /api/generate
@@ -14,7 +14,7 @@ export async function POST(request: NextRequest) {
   try {
     // Parse and validate request body
     const body: GenerateRequest = await request.json();
-    const { count } = body;
+    const { count, model = "anthropic/claude-sonnet-4.5" } = body;
 
     // Validate count
     if (![1, 5, 30].includes(count)) {
@@ -27,32 +27,51 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Validate model
+    const validModels: ModelOption[] = [
+      "anthropic/claude-sonnet-4.5",
+      "google/gemini-3-flash-preview",
+      "openai/gpt-4o-mini",
+      "sao10k/l3-lunaris-8b",
+      "mistralai/ministral-3b"
+    ];
+    if (model && !validModels.includes(model)) {
+      return new Response(
+        JSON.stringify({ error: "Invalid model selection" }),
+        { status: 400, headers: { "Content-Type": "application/json" } }
+      );
+    }
+
     // Create SSE stream
     const encoder = new TextEncoder();
 
     const stream = new ReadableStream({
       async start(controller) {
         try {
-          // Generate numbers one by one
-          for (let i = 1; i <= count; i++) {
+          // Start all API calls in parallel
+          const promises = Array(count)
+            .fill(null)
+            .map(() => generateRandomNumber(0, model));
+
+          // Process results as they complete
+          for (let i = 0; i < promises.length; i++) {
             try {
-              // Generate random number using OpenRouter API
-              const number = await generateRandomNumber();
+              const number = await promises[i];
 
               // Send number event
               const message: SSEMessage = {
                 type: "number",
                 value: number,
-                progress: i,
+                progress: i + 1,
                 total: count,
               };
 
               const data = `data: ${JSON.stringify(message)}\n\n`;
               controller.enqueue(encoder.encode(data));
 
-              console.log(`Generated number ${i}/${count}: ${number}`);
+              console.log(`Generated number ${i + 1}/${count}: ${number} (${model})`);
             } catch (error) {
-              console.error(`Error generating number ${i}/${count}:`, error);
+              console.error(`Error generating number ${i + 1}/${count}:`, error);
 
               // Send error event
               const errorMessage: SSEMessage = {
@@ -68,6 +87,9 @@ export async function POST(request: NextRequest) {
             }
           }
 
+          console.log(`Completed generating ${count} numbers (${model})`);
+
+
           // Send completion event
           const doneMessage: SSEMessage = {
             type: "done",
@@ -75,8 +97,6 @@ export async function POST(request: NextRequest) {
 
           const data = `data: ${JSON.stringify(doneMessage)}\n\n`;
           controller.enqueue(encoder.encode(data));
-
-          console.log(`Completed generating ${count} numbers`);
         } catch (error) {
           console.error("Error in SSE stream:", error);
 

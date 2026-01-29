@@ -1,0 +1,293 @@
+{
+  "name": "Randnumber batch",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -1696,
+        -304
+      ],
+      "id": "dd98a00b-4427-473b-97a4-d55bbebce7d4",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "Generate a random number 1-100. Only output the number, nothing else. do not use human bias. actually generate a random number",
+        "hasOutputParser": true,
+        "options": {
+          "batching": {
+            "batchSize": 30,
+            "delayBetweenBatches": 0
+          }
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        -1344,
+        -304
+      ],
+      "id": "470679a7-0983-4d67-be9f-6859363c7e05",
+      "name": "AI Agent1"
+    },
+    {
+      "parameters": {
+        "model": "google/gemini-2.5-flash-lite",
+        "options": {
+          "maxRetries": 2
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
+      "typeVersion": 1,
+      "position": [
+        -1344,
+        -80
+      ],
+      "id": "8344f0a9-88ff-4fbe-8888-08ad207d63d0",
+      "name": "OpenRouter Chat Model1",
+      "credentials": {
+        "openRouterApi": {
+          "id": "n7PpDn058yTx4p3V",
+          "name": "OpenRouter account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "Generate a random number 1-100. Only output the number, nothing else. do not use human bias. actually generate a random number",
+        "options": {
+          "batching": {
+            "batchSize": 30
+          }
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        -992,
+        -304
+      ],
+      "id": "23e45c9e-c44f-461d-bc51-aed86052ee71",
+      "name": "AI Agent2"
+    },
+    {
+      "parameters": {
+        "model": "anthropic/claude-3.5-haiku",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
+      "typeVersion": 1,
+      "position": [
+        -992,
+        -80
+      ],
+      "id": "bd07aa8b-4b9b-4e16-ad60-d0697b5b03e3",
+      "name": "OpenRouter Chat Model2",
+      "credentials": {
+        "openRouterApi": {
+          "id": "n7PpDn058yTx4p3V",
+          "name": "OpenRouter account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "Generate a random number 1-100. Only output the number, nothing else. do not use human bias. actually generate a random number",
+        "options": {
+          "batching": {
+            "batchSize": 30
+          }
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        -640,
+        -304
+      ],
+      "id": "2bded243-7413-4ec7-a3f0-e8915d75e323",
+      "name": "AI Agent3"
+    },
+    {
+      "parameters": {
+        "model": "openai/gpt-4-turbo",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
+      "typeVersion": 1,
+      "position": [
+        -640,
+        -80
+      ],
+      "id": "7dd25704-36c7-4591-8603-cd94407a1384",
+      "name": "OpenRouter Chat Model3",
+      "credentials": {
+        "openRouterApi": {
+          "id": "n7PpDn058yTx4p3V",
+          "name": "OpenRouter account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "=https://quickchart.io/chart/render/zm-7a99d4fd-d7bb-4c8e-ab4d-3216e786e250?title=A peculiar chart of \"random\" numbers&labels={{ $json.label }}&data1={{ $json.data }}\n",
+        "options": {}
+      },
+      "id": "c49a8511-322f-4dc5-b5d5-9d8f6264d4e7",
+      "name": "HTTP Request",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        -128,
+        -304
+      ]
+    },
+    {
+      "parameters": {
+        "instructions": "count the number of times each number appears, then output a json with \"label\" as the list of the numbers 1 to 100 and \"data\" as each number's frequency {{ $('AI Agent1').item.json.output }} {{ $('AI Agent2').item.json.output }} {{ $('AI Agent3').item.json.output }}",
+        "codeGeneratedForPrompt": "count the number of times each number appears, then output a json with \"label\" as the list of the numbers 1 to 100 and \"data\" as each number's frequency {{ $('AI Agent1').item.json.output }} {{ $('AI Agent2').item.json.output }} {{ $('AI Agent3').item.json.output }}",
+        "jsCode": "const agent1Outputs = $(\"AI Agent1\")\n  .all()\n  .map((item) => item.json.output);\nconst agent2Outputs = $(\"AI Agent2\")\n  .all()\n  .map((item) => item.json.output);\nconst agent3Outputs = $(\"AI Agent3\")\n  .all()\n  .map((item) => item.json.output);\n\nconst allOutputs = [...agent1Outputs, ...agent2Outputs, ...agent3Outputs];\n\nconst frequency = Array.from({ length: 101 }, (_, i) => i).map((num) => {\n  const count = allOutputs.filter((output) => output == num).length;\n  return count;\n});\n\nreturn [\n  {\n    json: { label: Array.from({ length: 101 }, (_, i) => i), data: frequency },\n  },\n];\n"
+      },
+      "type": "n8n-nodes-base.aiTransform",
+      "typeVersion": 1,
+      "position": [
+        -272,
+        -304
+      ],
+      "id": "90d44125-4c77-4c20-ac55-0c931fd35401",
+      "name": "AI Transform"
+    },
+    {
+      "parameters": {
+        "jsCode": "const numbers = Array.from({ length: 30 }, (_, i) => i + 1);\nreturn numbers.map((number) => ({ json: { number } }));\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1536,
+        -304
+      ],
+      "id": "17cbf868-b8e4-4574-8eba-8d5889b9d47d",
+      "name": "Code in JavaScript"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent1": {
+      "main": [
+        [
+          {
+            "node": "AI Agent2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenRouter Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent2": {
+      "main": [
+        [
+          {
+            "node": "AI Agent3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenRouter Chat Model2": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent2",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent3": {
+      "main": [
+        [
+          {
+            "node": "AI Transform",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenRouter Chat Model3": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent3",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Transform": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": false
+  },
+  "versionId": "41d58fce-a6dc-4711-a79b-759f9009fd83",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "7267c6c242ca9e0017bc404a616c8e9f561467f1f99f530859dbdab4e68316c4"
+  },
+  "id": "oHCPDpJDNHyyyicE",
+  "tags": []
+}
