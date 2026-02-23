@@ -86,9 +86,6 @@ export function ControlPanel({
               <SelectItem value="sao10k/l3-lunaris-8b">
                 Lunaris 8B
               </SelectItem>
-              <SelectItem value="mistralai/ministral-3b">
-                Ministral 3B
-              </SelectItem>
             </SelectContent>
           </Select>
         </div>

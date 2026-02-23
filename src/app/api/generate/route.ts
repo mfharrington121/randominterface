@@ -32,8 +32,7 @@ export async function POST(request: NextRequest) {
       "anthropic/claude-sonnet-4.5",
       "google/gemini-3-flash-preview",
       "openai/gpt-4o-mini",
-      "sao10k/l3-lunaris-8b",
-      "mistralai/ministral-3b"
+      "sao10k/l3-lunaris-8b"
     ];
     if (model && !validModels.includes(model)) {
       return new Response(
